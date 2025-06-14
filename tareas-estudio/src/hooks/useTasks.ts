@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Task } from "../types";
+import { type Task } from "../types";
 
 export const useTasks = () => {
   const [tasks, setTasks] = useState<Task[]>(() => {

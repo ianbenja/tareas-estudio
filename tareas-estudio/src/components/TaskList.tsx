@@ -1,6 +1,6 @@
 import React from "react";
 import TaskItem from "./TaskItem"; // Importa el componente para cada tarea individual.
-import { Task } from "../types"; // Importa la definición del tipo Task.
+import { type Task } from "../types"; // Importa la definición del tipo Task.
 
 // Define la interfaz para las props del componente.
 interface TaskListProps {

@@ -1,5 +1,5 @@
 import React from "react";
-import { Task } from "../types"; // Importa la definición del tipo Task.
+import { type Task } from "../types"; // Importa la definición del tipo Task.
 
 // Define la interfaz para las props del componente.
 // Recibe el objeto 'task' y las funciones para alternar su estado y eliminarla.

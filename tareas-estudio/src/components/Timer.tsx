@@ -35,7 +35,7 @@ const Timer: React.FC<TimerProps> = ({
 
   // El useEffect principal que maneja la lógica del intervalo del temporizador.
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
+    let interval: number | null = null;
 
     // Si el temporizador está activo y queda tiempo, crea un intervalo que resta 1 segundo.
     if (isActive && timeLeft > 0) {
