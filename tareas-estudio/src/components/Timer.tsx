@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
+import { type Task } from "../types";
 
-// Define la interfaz para las props que el componente Timer recibirá.
 interface TimerProps {
-  workTime: number; // Duración de la sesión de trabajo en minutos.
-  breakTime: number; // Duración del descanso en minutos.
-  onTimerComplete: () => void; // Función que se ejecuta cuando termina una sesión de trabajo.
-  onBreakComplete: () => void; // Función que se ejecuta cuando termina un descanso.
+  workTime: number;
+  breakTime: number;
+  onTimerComplete: () => void;
+  onBreakComplete: () => void;
+  currentTask: Task | null; // Prop para recibir la tarea actual
 }
 
 const Timer: React.FC<TimerProps> = ({
@@ -13,34 +14,29 @@ const Timer: React.FC<TimerProps> = ({
   breakTime,
   onTimerComplete,
   onBreakComplete,
+  currentTask,
 }) => {
   const [isWorkSession, setIsWorkSession] = useState(true);
   const [timeLeft, setTimeLeft] = useState(workTime * 60);
   const [isActive, setIsActive] = useState(false);
   const [isFinishing, setIsFinishing] = useState(false);
-
-  // Ref para el elemento de audio HTML.
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  // Actualiza el tiempo si la configuración cambia mientras el timer está pausado.
+  // Efecto para actualizar el tiempo si cambia la configuración
   useEffect(() => {
     if (!isActive) {
       setTimeLeft(isWorkSession ? workTime * 60 : breakTime * 60);
     }
   }, [workTime, breakTime, isWorkSession, isActive]);
 
-  // useEffect principal que maneja la lógica del temporizador.
+  // Efecto principal del temporizador
   useEffect(() => {
     let interval: number | null = null;
-
     if (isActive && timeLeft > 0) {
-      interval = setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
-      }, 1000);
+      interval = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
     } else if (isActive && timeLeft === 0) {
-      playNotificationSound(); // Llama a nuestra función de reproducción.
+      playNotificationSound();
       setIsFinishing(true);
-
       if (isWorkSession) {
         onTimerComplete();
         setIsWorkSession(false);
@@ -50,14 +46,10 @@ const Timer: React.FC<TimerProps> = ({
         setIsWorkSession(true);
         setTimeLeft(workTime * 60);
       }
-
       setTimeout(() => setIsFinishing(false), 2000);
     }
-
     return () => {
-      if (interval) {
-        clearInterval(interval);
-      }
+      if (interval) clearInterval(interval);
     };
   }, [
     isActive,
@@ -69,29 +61,17 @@ const Timer: React.FC<TimerProps> = ({
     onBreakComplete,
   ]);
 
-  // Función para reproducir el sonido desde el elemento de audio.
+  // Función para reproducir el sonido de notificación
   const playNotificationSound = () => {
     if (audioRef.current) {
-      audioRef.current.currentTime = 0; // Reinicia el audio al principio.
-      audioRef.current.play().catch((error) => {
-        // Este catch es importante para manejar errores si el navegador aún bloquea el audio.
-        console.error("Error al reproducir el sonido:", error);
-      });
+      audioRef.current.currentTime = 0;
+      audioRef.current
+        .play()
+        .catch((e) => console.error("Error al reproducir sonido:", e));
     }
   };
 
-  // Inicia o pausa el temporizador. La primera interacción del usuario es clave.
-  const toggleTimer = () => {
-    // La primera vez que el usuario hace clic en "Iniciar",
-    // el navegador considera que ha habido una "interacción".
-    // Esto es fundamental para que las llamadas posteriores a .play() funcionen.
-    if (audioRef.current && audioRef.current.paused) {
-      // No es necesario reproducir y pausar, la primera interacción es suficiente
-      // para habilitar futuras reproducciones automáticas.
-    }
-    setIsActive(!isActive);
-  };
-
+  const toggleTimer = () => setIsActive(!isActive);
   const resetTimer = () => {
     setIsActive(false);
     setIsWorkSession(true);
@@ -113,6 +93,22 @@ const Timer: React.FC<TimerProps> = ({
 
   return (
     <div className={timerContainerClasses}>
+      {/* Contenedor para mostrar la tarea actual */}
+      <div className="h-6 mb-2 text-center">
+        {currentTask ? (
+          <p
+            className="text-sm text-gray-500 dark:text-gray-400 truncate"
+            title={currentTask.text}
+          >
+            Enfocado en: <span className="font-bold">{currentTask.text}</span>
+          </p>
+        ) : (
+          <p className="text-sm text-gray-400 dark:text-gray-500">
+            Selecciona una tarea para enfocar
+          </p>
+        )}
+      </div>
+
       <div
         className={`text-6xl font-bold mb-4 ${
           isWorkSession ? "text-blue-500" : "text-green-500"
@@ -137,10 +133,9 @@ const Timer: React.FC<TimerProps> = ({
           Reiniciar
         </button>
       </div>
-      {/* Volvemos a añadir el elemento <audio> y lo enlazamos con la ref. */}
       <audio
         ref={audioRef}
-        src="https://www.soundjay.com/buttons/sounds/button-16.mp3"
+        src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg"
         preload="auto"
       />
     </div>

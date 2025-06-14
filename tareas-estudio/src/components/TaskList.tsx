@@ -1,38 +1,43 @@
 import React from "react";
-import TaskItem from "./TaskItem"; // Importa el componente para cada tarea individual.
-import { type Task } from "../types"; // Importa la definición del tipo Task.
+import TaskItem from "./TaskItem";
+import { type Task } from "../types";
 
-// Define la interfaz para las props del componente.
 interface TaskListProps {
-  tasks: Task[]; // Un array de objetos Task.
-  onToggleTask: (id: number) => void; // Función para marcar una tarea como completa/incompleta.
-  onDeleteTask: (id: number) => void; // Función para eliminar una tarea.
+  tasks: Task[];
+  onToggleTask: (id: number) => void;
+  onDeleteTask: (id: number) => void;
+  currentTaskId: number | null;
+  onSetCurrentTask: (id: number) => void;
+  onViewDetails: (task: Task) => void;
 }
 
 const TaskList: React.FC<TaskListProps> = ({
   tasks,
   onToggleTask,
   onDeleteTask,
+  currentTaskId,
+  onSetCurrentTask,
+  onViewDetails,
 }) => {
   return (
-    // Contenedor principal para la lista de tareas con estilos de Tailwind.
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md">
-      {/* Renderizado condicional: comprueba si hay tareas en la lista. */}
       {tasks.length > 0 ? (
-        // Si hay tareas, se renderiza una lista desordenada.
         <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-          {/* Mapea cada tarea a un componente TaskItem. */}
           {tasks.map((task) => (
             <TaskItem
-              key={task.id} // La key es crucial para que React identifique cada elemento.
+              key={task.id}
               task={task}
+              // Comprueba si esta tarea es la que está seleccionada actualmente.
+              isCurrent={task.id === currentTaskId}
               onToggle={onToggleTask}
               onDelete={onDeleteTask}
+              // Pasa la función para establecer esta tarea como la actual.
+              onSetCurrent={onSetCurrentTask}
+              onViewDetails={onViewDetails}
             />
           ))}
         </ul>
       ) : (
-        // Si no hay tareas, se muestra un mensaje.
         <p className="p-4 text-center text-gray-500">
           Aún no hay tareas. ¡Añade una!
         </p>

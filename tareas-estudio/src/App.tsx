@@ -3,22 +3,33 @@ import Timer from "./components/Timer";
 import TaskList from "./components/TaskList";
 import AddTaskForm from "./components/AddTaskForm";
 import Settings from "./components/Settings";
+import TaskDetailsModal from "./components/TaskDetailsModal";
 import { useTasks } from "./hooks/useTasks";
+import { type Task } from "./types";
 
 function App() {
-  const { tasks, addTask, toggleTask, deleteTask } = useTasks();
+  const { tasks, addTask, toggleTask, deleteTask, logPomodoro } = useTasks();
   const [workTime, setWorkTime] = useState(25);
   const [breakTime, setBreakTime] = useState(5);
 
+  // Estado para la tarea actual y el modal de detalles
+  const [currentTaskId, setCurrentTaskId] = useState<number | null>(null);
+  const [viewingTask, setViewingTask] = useState<Task | null>(null);
+
   const handleTimerComplete = () => {
-    console.log("Work session finished! Time for a break.");
-    // You can add more complex notification logic here
+    console.log("Work session finished!");
+    // Si hay una tarea seleccionada, registra el pomodoro completado.
+    if (currentTaskId) {
+      logPomodoro(currentTaskId, workTime);
+    }
   };
 
   const handleBreakComplete = () => {
-    console.log("Break is over! Back to work.");
-    // You can add more complex notification logic here
+    console.log("Break is over!");
   };
+
+  // Busca la tarea actual en el array de tareas
+  const currentTask = tasks.find((t) => t.id === currentTaskId) || null;
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col items-center p-4 sm:p-8">
@@ -30,11 +41,13 @@ function App() {
         </header>
 
         <main>
+          {/* Pasa la tarea actual al temporizador */}
           <Timer
             workTime={workTime}
             breakTime={breakTime}
             onTimerComplete={handleTimerComplete}
             onBreakComplete={handleBreakComplete}
+            currentTask={currentTask}
           />
 
           <Settings
@@ -46,17 +59,31 @@ function App() {
 
           <div className="mt-8">
             <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
-              My Tasks
+              Mis Tareas
             </h2>
             <AddTaskForm onAddTask={addTask} />
+            {/* Asegúrate de pasar onSetCurrentTask a TaskList. 
+              Esta es la corrección clave para tu error.
+            */}
             <TaskList
               tasks={tasks}
               onToggleTask={toggleTask}
               onDeleteTask={deleteTask}
+              currentTaskId={currentTaskId}
+              onSetCurrentTask={setCurrentTaskId} // <-- ESTA LÍNEA CORRIGE EL ERROR
+              onViewDetails={setViewingTask}
             />
           </div>
         </main>
       </div>
+
+      {/* Renderiza el modal solo si hay una tarea para ver */}
+      {viewingTask && (
+        <TaskDetailsModal
+          task={viewingTask}
+          onClose={() => setViewingTask(null)}
+        />
+      )}
     </div>
   );
 }
