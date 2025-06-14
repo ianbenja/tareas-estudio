@@ -14,53 +14,46 @@ const Timer: React.FC<TimerProps> = ({
   onTimerComplete,
   onBreakComplete,
 }) => {
-  // Estado para saber si estamos en una sesión de trabajo (true) o descanso (false).
   const [isWorkSession, setIsWorkSession] = useState(true);
-  // Estado para el tiempo restante en segundos. Se inicializa con el tiempo de trabajo.
   const [timeLeft, setTimeLeft] = useState(workTime * 60);
-  // Estado para saber si el temporizador está activo (corriendo) o pausado.
   const [isActive, setIsActive] = useState(false);
+  const [isFinishing, setIsFinishing] = useState(false);
 
-  // Referencia al elemento de audio para poder controlarlo (ej. play()).
+  // Ref para el elemento de audio HTML.
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  // Este useEffect se ejecuta cuando cambian los tiempos de trabajo/descanso
-  // o el tipo de sesión, pero solo si el temporizador está pausado.
-  // Asegura que el tiempo mostrado se actualice si el usuario cambia la configuración.
+  // Actualiza el tiempo si la configuración cambia mientras el timer está pausado.
   useEffect(() => {
     if (!isActive) {
       setTimeLeft(isWorkSession ? workTime * 60 : breakTime * 60);
     }
   }, [workTime, breakTime, isWorkSession, isActive]);
 
-  // El useEffect principal que maneja la lógica del intervalo del temporizador.
+  // useEffect principal que maneja la lógica del temporizador.
   useEffect(() => {
-    let interval: number | null = null;
+    let interval: NodeJS.Timeout | null = null;
 
-    // Si el temporizador está activo y queda tiempo, crea un intervalo que resta 1 segundo.
     if (isActive && timeLeft > 0) {
       interval = setInterval(() => {
         setTimeLeft((prev) => prev - 1);
       }, 1000);
-    } else if (timeLeft === 0) {
-      // Si el tiempo llega a 0...
-      audioRef.current?.play(); // ...reproduce el sonido de notificación.
+    } else if (isActive && timeLeft === 0) {
+      playNotificationSound(); // Llama a nuestra función de reproducción.
+      setIsFinishing(true);
 
-      // Cambia de sesión de trabajo a descanso o viceversa.
       if (isWorkSession) {
-        onTimerComplete(); // Llama a la función del padre.
-        setIsWorkSession(false); // Cambia a modo descanso.
-        setTimeLeft(breakTime * 60); // Establece el tiempo de descanso.
+        onTimerComplete();
+        setIsWorkSession(false);
+        setTimeLeft(breakTime * 60);
       } else {
-        onBreakComplete(); // Llama a la función del padre.
-        setIsWorkSession(true); // Vuelve a modo trabajo.
-        setTimeLeft(workTime * 60); // Establece el tiempo de trabajo.
+        onBreakComplete();
+        setIsWorkSession(true);
+        setTimeLeft(workTime * 60);
       }
-      setIsActive(false); // Pausa el temporizador automáticamente.
+
+      setTimeout(() => setIsFinishing(false), 2000);
     }
 
-    // Función de limpieza: se ejecuta cuando el componente se desmonta o las dependencias cambian.
-    // Es crucial para evitar fugas de memoria y bugs.
     return () => {
       if (interval) {
         clearInterval(interval);
@@ -76,17 +69,36 @@ const Timer: React.FC<TimerProps> = ({
     onBreakComplete,
   ]);
 
-  // Inicia o pausa el temporizador.
-  const toggleTimer = () => setIsActive(!isActive);
+  // Función para reproducir el sonido desde el elemento de audio.
+  const playNotificationSound = () => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0; // Reinicia el audio al principio.
+      audioRef.current.play().catch((error) => {
+        // Este catch es importante para manejar errores si el navegador aún bloquea el audio.
+        console.error("Error al reproducir el sonido:", error);
+      });
+    }
+  };
 
-  // Reinicia el temporizador a su estado inicial (sesión de trabajo).
+  // Inicia o pausa el temporizador. La primera interacción del usuario es clave.
+  const toggleTimer = () => {
+    // La primera vez que el usuario hace clic en "Iniciar",
+    // el navegador considera que ha habido una "interacción".
+    // Esto es fundamental para que las llamadas posteriores a .play() funcionen.
+    if (audioRef.current && audioRef.current.paused) {
+      // No es necesario reproducir y pausar, la primera interacción es suficiente
+      // para habilitar futuras reproducciones automáticas.
+    }
+    setIsActive(!isActive);
+  };
+
   const resetTimer = () => {
     setIsActive(false);
     setIsWorkSession(true);
     setTimeLeft(workTime * 60);
+    setIsFinishing(false);
   };
 
-  // Formatea los segundos a un string MM:SS.
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -95,9 +107,12 @@ const Timer: React.FC<TimerProps> = ({
       .padStart(2, "0")}`;
   };
 
+  const timerContainerClasses = `bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8 text-center transition-all duration-300 ${
+    isFinishing ? "animate-pulse ring-4 ring-green-400" : "ring-0"
+  }`;
+
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8 text-center">
-      {/* Muestra el tiempo restante. El color cambia según la sesión. */}
+    <div className={timerContainerClasses}>
       <div
         className={`text-6xl font-bold mb-4 ${
           isWorkSession ? "text-blue-500" : "text-green-500"
@@ -105,11 +120,9 @@ const Timer: React.FC<TimerProps> = ({
       >
         {formatTime(timeLeft)}
       </div>
-      {/* Muestra el tipo de sesión actual. */}
       <h3 className="text-xl text-gray-500 dark:text-gray-400 mb-6">
         {isWorkSession ? "Sesión de Trabajo" : "Descanso"}
       </h3>
-      {/* Controles del temporizador. */}
       <div className="flex justify-center space-x-4">
         <button
           onClick={toggleTimer}
@@ -124,7 +137,7 @@ const Timer: React.FC<TimerProps> = ({
           Reiniciar
         </button>
       </div>
-      {/* Elemento de audio oculto para las notificaciones. */}
+      {/* Volvemos a añadir el elemento <audio> y lo enlazamos con la ref. */}
       <audio
         ref={audioRef}
         src="https://www.soundjay.com/buttons/sounds/button-16.mp3"
