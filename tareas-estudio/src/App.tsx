@@ -35,9 +35,22 @@ function App() {
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col items-center p-4 sm:p-8">
       <div className="w-full max-w-md mx-auto">
         <header className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 dark:text-white">
-            Pomodoro & Tasks
-          </h1>
+          {/* He reincorporado el ícono y el título actualizado aquí */}
+          <div className="flex justify-center items-center gap-3 text-4xl font-bold text-gray-800 dark:text-white">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 64 64"
+              className="w-10 h-10"
+            >
+              <path fill="#D84339" d="M8 22h48v4H8z" />
+              <path fill="#F44336" d="M8 8h48v14H8z" />
+              <path fill="#3C8E4A" d="M8 40h48v4H8z" />
+              <path fill="#4CAF50" d="M8 26h48v14H8z" />
+              <path fill="#1E88E5" d="M8 58h48v4H8z" />
+              <path fill="#2196F3" d="M8 44h48v14H8z" />
+            </svg>
+            <h1>Pomodoro & Tareas</h1>
+          </div>
         </header>
 
         <main>
@@ -62,15 +75,12 @@ function App() {
               Mis Tareas
             </h2>
             <AddTaskForm onAddTask={addTask} />
-            {/* Asegúrate de pasar onSetCurrentTask a TaskList. 
-              Esta es la corrección clave para tu error.
-            */}
             <TaskList
               tasks={tasks}
               onToggleTask={toggleTask}
               onDeleteTask={deleteTask}
               currentTaskId={currentTaskId}
-              onSetCurrentTask={setCurrentTaskId} // <-- ESTA LÍNEA CORRIGE EL ERROR
+              onSetCurrentTask={setCurrentTaskId}
               onViewDetails={setViewingTask}
             />
           </div>
