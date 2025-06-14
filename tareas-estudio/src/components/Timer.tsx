@@ -31,7 +31,7 @@ const Timer: React.FC<TimerProps> = ({
 
   // useEffect principal que maneja la lógica del temporizador.
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
+    let interval: number | null = null;
 
     if (isActive && timeLeft > 0) {
       interval = setInterval(() => {
